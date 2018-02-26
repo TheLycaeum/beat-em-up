@@ -9,14 +9,14 @@ X_MAX = 640
 Y_MAX = 480
 
 class Fighter(pygame.sprite.Sprite):
-    def __init__(self, image, groups, pos):
+    def __init__(self, image, groups, pos, size):
         super(Fighter, self).__init__()
-
+        self.s_x, self.s_y = size
         self.sheet = pygame.image.load(image).convert()
         colorkey = self.sheet.get_at((0,0))
         self.sheet.set_colorkey(colorkey)
-        self.image = pygame.Surface((185, 245),pygame.SRCALPHA, 32).convert_alpha()
-        self.image.blit(self.sheet, dest = (0,0), area = (0,0,185, 245))
+        self.image = pygame.Surface((self.s_x, self.s_y),pygame.SRCALPHA, 32).convert_alpha()
+        self.image.blit(self.sheet, dest = (0,0), area = (0,0,self.s_x, self.s_y))
         
         self.rect = self.image.get_rect()
         self.rect.midbottom = pos
@@ -25,12 +25,11 @@ class Fighter(pygame.sprite.Sprite):
         self.add(groups)
 
     def load_images(self):
-        q = 185
         self.idle = []
         self.idle_idx = 0
-        for i in range(0, q*7, q):
-            img = pygame.Surface((q, 245), pygame.SRCALPHA, 32).convert_alpha()
-            img.blit(self.sheet, dest = (0, 0), area = (i, 0, i+q, 245))
+        for i in range(0, self.s_x*7, self.s_x):
+            img = pygame.Surface((self.s_x, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
+            img.blit(self.sheet, dest = (0, 0), area = (i, 0, i+self.s_x, self.s_y))
             self.idle.append(img)
         
 
@@ -100,7 +99,7 @@ def main():
 
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
-    f = Fighter("sprites/fighter-terry.png", everything, (100, 490))
+    f = Fighter("sprites/fighter-terry.png", everything, (200, 490), (185, 245))
 
     while True:
         for event in pygame.event.get():
@@ -127,5 +126,6 @@ def main():
             
 
 if __name__ == "__main__":
+    import sys
 
     main()
