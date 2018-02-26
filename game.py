@@ -22,22 +22,74 @@ class Fighter(pygame.sprite.Sprite):
         self.rect.midbottom = pos
 
         self.load_images()
+
+        self.punching = False
+
         self.add(groups)
 
     def load_images(self):
+        # Load idling images
         self.idle = []
         self.idle_idx = 0
         for i in range(0, self.s_x*7, self.s_x):
             img = pygame.Surface((self.s_x, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
             img.blit(self.sheet, dest = (0, 0), area = (i, 0, i+self.s_x, self.s_y))
             self.idle.append(img)
-        
+
+        self.punch_images = []
+        self.punch_idx = 0
+        # q = 1359
+        # s = 424
+        # q = 1360
+        s = 424
+        w = 220
+
+        img = pygame.Surface((w, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
+        img.blit(self.sheet, dest = (0, 0), area = (q, s, q+w, s+self.s_y))
+        self.punch_images.append(img)
+
+        img = pygame.Surface((w, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
+        img.blit(self.sheet, dest = (0, 0), area = (q+w, s, q+w*2, s+self.s_y))
+        self.punch_images.append(img)
+
+        img = pygame.Surface((w, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
+        img.blit(self.sheet, dest = (0, 0), area = (q+w*2, s, q+w*3, s+self.s_y))
+        self.punch_images.append(img)
+
+        # img = pygame.Surface((w, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
+        # img.blit(self.sheet, dest = (0, 0), area = (q+w*2, s+self.s_y, q+w*3, s+self.s_y*2))
+        # self.punch_images.append(img)
+
+        # img = pygame.Surface((w, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
+        # img.blit(self.sheet, dest = (0, 0), area = (q+w, s+self.s_y, q+w*2, s+self.s_y*2))
+        # self.punch_images.append(img)
+
+        # img = pygame.Surface((w, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
+        # img.blit(self.sheet, dest = (0, 0), area = (q, s+self.s_y, q+w, s+self.s_y*2))
+        # self.punch_images.append(img)
+
+
+
+    def punch(self):
+        self.punching = True
 
     def update(self):
-        self.image = self.image
-        self.image = self.idle[int(self.idle_idx)]
-        self.idle_idx += 0.25
-        self.idle_idx %= 7
+        if self.punching:
+            try:
+                self.image = self.punch_images[int(self.punch_idx)]
+                self.punch_idx += 0.25
+                self.punch_idx %= len(self.punch_images)
+                if self.punch_idx == 0:
+                    self.punching = False
+            except IndexError as e:
+                print (int(self.punch_idx))
+                raise
+        else:
+            self.image = self.image
+            self.image = self.idle[int(self.idle_idx)]
+            self.idle_idx += 0.25
+            self.idle_idx %= 7
+
         x, y = self.rect.center
         self.rect.center = (x, y)
 
@@ -113,7 +165,7 @@ def main():
                     b.scroll_left()
                     pass
                 if event.key == K_a:
-                    print ("Hello")
+                    f.punch()
                 
 
 
@@ -127,5 +179,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
-
+    q = int(sys.argv[1])
     main()
