@@ -35,12 +35,16 @@ class Fighter(pygame.sprite.Sprite):
             img = pygame.Surface((self.s_x, self.s_y), pygame.SRCALPHA, 32).convert_alpha()
             img.blit(self.sheet, dest = (0, 0), area = (i, 0, i+self.s_x, self.s_y))
             self.idle.append(img)
+        t = list(reversed(self.idle))
+        self.idle += t
+        self.idle.pop()
+
 
         self.punch_images = []
         self.punch_idx = 0
         # q = 1359
         # s = 424
-        # q = 1360
+        q = 1340
         s = 424
         w = 220
 
@@ -88,7 +92,7 @@ class Fighter(pygame.sprite.Sprite):
             self.image = self.image
             self.image = self.idle[int(self.idle_idx)]
             self.idle_idx += 0.25
-            self.idle_idx %= 7
+            self.idle_idx %= len(self.idle)
 
         x, y = self.rect.center
         self.rect.center = (x, y)
@@ -169,7 +173,7 @@ def main():
                 
 
 
-        clock.tick(30)
+        # clock.tick(30)
 
         everything.clear(screen, empty)
         everything.update()
@@ -178,6 +182,5 @@ def main():
             
 
 if __name__ == "__main__":
-    import sys
-    q = int(sys.argv[1])
+
     main()
