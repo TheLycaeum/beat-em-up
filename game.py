@@ -2,7 +2,7 @@ import sys
 
 import pygame
 from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, \
-    K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN, FULLSCREEN, RLEACCEL
+    K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN, FULLSCREEN, RLEACCEL, K_a
 
 
 X_MAX = 640
@@ -15,30 +15,30 @@ class Fighter(pygame.sprite.Sprite):
         self.sheet = pygame.image.load(image).convert()
         colorkey = self.sheet.get_at((0,0))
         self.sheet.set_colorkey(colorkey)
-        self.image = pygame.Surface((69, 118),pygame.SRCALPHA, 32).convert_alpha()
-        self.image.blit(self.sheet, dest = (0,0), area = (0,0,69, 118))
-
+        self.image = pygame.Surface((185, 245),pygame.SRCALPHA, 32).convert_alpha()
+        self.image.blit(self.sheet, dest = (0,0), area = (0,0,185, 245))
+        
         self.rect = self.image.get_rect()
         self.rect.midbottom = pos
-        
+
         self.load_images()
         self.add(groups)
 
     def load_images(self):
-        q = 71
+        q = 185
         self.idle = []
         self.idle_idx = 0
-        for i in range(0, q*8, q):
-            img = pygame.Surface((q, 118), pygame.SRCALPHA, 32).convert_alpha()
-            img.blit(self.sheet, dest = (0, 0), area = (i, 0, i+q, 118))
+        for i in range(0, q*7, q):
+            img = pygame.Surface((q, 245), pygame.SRCALPHA, 32).convert_alpha()
+            img.blit(self.sheet, dest = (0, 0), area = (i, 0, i+q, 245))
             self.idle.append(img)
         
 
     def update(self):
+        self.image = self.image
         self.image = self.idle[int(self.idle_idx)]
-        
         self.idle_idx += 0.25
-        self.idle_idx %= 8
+        self.idle_idx %= 7
         x, y = self.rect.center
         self.rect.center = (x, y)
 
@@ -100,7 +100,7 @@ def main():
 
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
-    f = Fighter("sprites/fighter.png", everything, (100, 470))
+    f = Fighter("sprites/fighter-terry.png", everything, (100, 490))
 
     while True:
         for event in pygame.event.get():
@@ -113,6 +113,9 @@ def main():
                 if event.key == K_LEFT:
                     b.scroll_left()
                     pass
+                if event.key == K_a:
+                    print ("Hello")
+                
 
 
         clock.tick(30)
@@ -124,4 +127,5 @@ def main():
             
 
 if __name__ == "__main__":
+
     main()
