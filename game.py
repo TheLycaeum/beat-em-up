@@ -33,6 +33,9 @@ class Enemy(pygame.sprite.Sprite):
         self.add(groups)
         self.fighter = fighter
         self.direction = "left"
+
+
+        
     
     def load_images(self):
         self.idle_images = []
@@ -129,7 +132,17 @@ class Fighter(pygame.sprite.Sprite):
         self.direction = "right"
 
         self.punch_sound = pygame.mixer.Sound("sounds/woosh.wav")
-        self.punch_sound.set_volume(0.4)
+        self.punch_sound.set_volume(0.8)
+
+        self.walk_in()
+
+    def walk_in(self):
+        self.walking_in = 30
+        self.state = Fighter.WALKING_RIGHT
+        self.walk_vel = 10
+        x, y = self.fighter_pos
+        self.fighter_pos = -100, y
+
 
     def load_images(self):
         # Load idling images
@@ -195,17 +208,21 @@ class Fighter(pygame.sprite.Sprite):
 
 
     def idle(self):
-        self.state = Fighter.IDLING
+        if not self.walking_in:
+            self.state = Fighter.IDLING
 
     def punch(self):
-        self.state = Fighter.PUNCHING
-        self.punch_sound.play(maxtime=100000000, loops=5)
+        if not self.walking_in:
+            self.state = Fighter.PUNCHING
+            self.punch_sound.play(maxtime=100000000, loops=5)
 
     def walk_right(self):
-        self.state = Fighter.WALKING_RIGHT
+        if not self.walking_in:
+            self.state = Fighter.WALKING_RIGHT
 
     def walk_left(self):
-        self.state = Fighter.WALKING_LEFT
+        if not self.walking_in:
+            self.state = Fighter.WALKING_LEFT
 
     def update(self):
         if self.direction == "right":
@@ -216,6 +233,19 @@ class Fighter(pygame.sprite.Sprite):
             self.idle_images = self.idle_images_left
             self.walking_images = self.walking_images_left
             self.punch_images = self.punch_images_left
+
+
+        if self.walking_in:
+            self.walking_in -= 1
+            print (self.walking_in)
+            if self.walking_in == 0:
+                self.state = Fighter.IDLING
+                if pygame.mixer.get_init():
+                    pygame.mixer.music.load("music/level-1.mp3")
+                    pygame.mixer.music.set_volume(0.8)
+                    pygame.mixer.music.play(-1)
+
+            
 
         actions = {Fighter.PUNCHING : self.update_punch,
                    Fighter.IDLING : self.update_idling,
@@ -323,10 +353,6 @@ class Background(pygame.sprite.Sprite):
 
 def init_pygame(groups):
     pygame.mixer.init()
-    if pygame.mixer.get_init():
-        pygame.mixer.music.load("music/level-1.mp3")
-        pygame.mixer.music.set_volume(0.8)
-        pygame.mixer.music.play(-1)
 
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
     empty = pygame.Surface((X_MAX, Y_MAX))
@@ -340,8 +366,7 @@ def main():
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
-    e = Enemy("sprites/enemy-gato.png", everything, (600, 450), f)
-
+    # e = Enemy("sprites/enemy-gato.png", everything, (600, 450), f)
 
     while True:
         for event in pygame.event.get():
