@@ -243,6 +243,7 @@ class Fighter(pygame.sprite.Sprite):
                     pygame.mixer.music.load("music/level-1.mp3")
                     pygame.mixer.music.set_volume(0.8)
                     pygame.mixer.music.play(-1)
+                self.walk_vel = 20
 
             
 
@@ -282,7 +283,7 @@ class Fighter(pygame.sprite.Sprite):
         x += self.walk_vel
         self.fighter_pos = x,y
 
-        if abs(x - X_MAX*1.0/16) < 10:
+        if abs(x - X_MAX*1.0/16) <= 10:
             self.background.scroll_left()
             x, y = self.fighter_pos 
             x += 100
@@ -293,7 +294,7 @@ class Fighter(pygame.sprite.Sprite):
         self.image = self.punch_images[int(self.punch_idx)]
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.fighter_pos
-        self.punch_idx += 0.5
+        self.punch_idx += 1
         self.punch_idx %= len(self.punch_images)
         if self.punch_idx == 0:
             self.state = Fighter.IDLING
@@ -373,7 +374,7 @@ def main():
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
-    # e = Enemy("sprites/enemy-gato.png", everything, (600, 450), f)
+    e = Enemy("sprites/enemy-gato.png", everything, (600, 450), f)
 
     while True:
         for event in pygame.event.get():
