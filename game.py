@@ -199,7 +199,7 @@ class Fighter(pygame.sprite.Sprite):
 
     def punch(self):
         self.state = Fighter.PUNCHING
-        self.punch_sound.play(maxtime=10000)
+        self.punch_sound.play(maxtime=100000000, loops=5)
 
     def walk_right(self):
         self.state = Fighter.WALKING_RIGHT
@@ -322,9 +322,14 @@ class Background(pygame.sprite.Sprite):
         self.vel = -50
 
 def init_pygame(groups):
+    pygame.mixer.init()
+    if pygame.mixer.get_init():
+        pygame.mixer.music.load("music/level-1.mp3")
+        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.play(-1)
+
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
     empty = pygame.Surface((X_MAX, Y_MAX))
-    pygame.mixer.init()
     return screen, empty
 
 
@@ -336,6 +341,7 @@ def main():
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
     e = Enemy("sprites/enemy-gato.png", everything, (600, 450), f)
+
 
     while True:
         for event in pygame.event.get():
