@@ -28,7 +28,7 @@ class Fighter(pygame.sprite.Sprite):
         self.sheet.set_colorkey(colorkey)
         self.image = pygame.Surface((10, 10),pygame.SRCALPHA, 32).convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect.bottomleft = pos
+        self.rect.center = pos
         self.load_images()
         self.state = Fighter.IDLING
         self.add(groups)
@@ -132,12 +132,12 @@ class Fighter(pygame.sprite.Sprite):
         action()
 
         self.rect = self.image.get_rect()
-        self.rect.bottomleft = self.fighter_pos
+        self.rect.center = self.fighter_pos
 
     def update_walking_right(self):
         self.image = self.walking_images[int(self.walking_idx)]
         self.rect = self.image.get_rect()
-        self.rect.bottomleft = self.fighter_pos
+        self.rect.center = self.fighter_pos
         self.walking_idx += 1
         self.walking_idx %= len(self.walking_images)
         x, y = self.fighter_pos
@@ -153,7 +153,7 @@ class Fighter(pygame.sprite.Sprite):
     def update_walking_left(self):
         self.image = self.walking_images[int(self.walking_idx)]
         self.rect = self.image.get_rect()
-        self.rect.bottomleft = self.fighter_pos
+        self.rect.center = self.fighter_pos
         self.walking_idx += 1
         self.walking_idx %= len(self.walking_images)
         x, y = self.fighter_pos
@@ -170,7 +170,7 @@ class Fighter(pygame.sprite.Sprite):
     def update_punch(self):
         self.image = self.punch_images[int(self.punch_idx)]
         self.rect = self.image.get_rect()
-        self.rect.bottomleft = self.fighter_pos
+        self.rect.center = self.fighter_pos
         self.punch_idx += 0.5
         self.punch_idx %= len(self.punch_images)
         if self.punch_idx == 0:
@@ -180,7 +180,7 @@ class Fighter(pygame.sprite.Sprite):
         self.image = self.image
         self.image = self.idle_images[int(self.idle_idx)]
         self.rect = self.image.get_rect()
-        self.rect.bottomleft = self.fighter_pos
+        self.rect.center = self.fighter_pos
         self.idle_idx += 0.5
         self.idle_idx %= len(self.idle_images)
 
@@ -239,7 +239,7 @@ def main():
 
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
-    f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
+    f = Fighter("sprites/fighter-terry.png", everything, (100, 370), b)
 
     while True:
         for event in pygame.event.get():
