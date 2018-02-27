@@ -19,6 +19,7 @@ class Fighter(pygame.sprite.Sprite):
     PUNCHING = 1
     WALKING = 2
     
+    
     def __init__(self, image, groups, pos, background):
         super(Fighter, self).__init__()
         self.sheet = pygame.image.load(image).convert()
@@ -33,6 +34,7 @@ class Fighter(pygame.sprite.Sprite):
         self.background = background
 
         self.fighter_pos = pos
+        self.push_back_to = 0
 
 
     def load_images(self):
@@ -73,7 +75,7 @@ class Fighter(pygame.sprite.Sprite):
         # Load walking images
         self.walking_images = []
         self.walking_idx = 0
-        
+        self.walk_vel = 20
         img = load_sprite(self.sheet, (166, 213), (2, 701, 2+166, 701+213))
         self.walking_images.append(img)
         img = load_sprite(self.sheet, (168, 212), (190, 700, 190+168, 700+212))
@@ -105,6 +107,13 @@ class Fighter(pygame.sprite.Sprite):
                    Fighter.WALKING: self.update_walking}
         action = actions[self.state] 
         action()
+
+        if self.push_back_to != 0:
+            self.push_back_to -= 50
+            x, y = self.fighter_pos 
+            x -= 150
+            self.fighter_pos = x, y
+
         self.rect = self.image.get_rect()
         self.rect.bottomleft = self.fighter_pos
 
@@ -115,12 +124,13 @@ class Fighter(pygame.sprite.Sprite):
         self.walking_idx += 0.5
         self.walking_idx %= len(self.walking_images)
         x, y = self.fighter_pos
-        x += 10
+        x += self.walk_vel
         self.fighter_pos = x,y
+        # print ("Fighter position ", self.fighter_pos)
+        # print ("Sprite position ",  self.rect.bottomleft)
         if x == X_MAX*3.0/4:
             self.background.scroll_right()
-            # self.fighter_pos = 100, y
-            
+            self.push_back_to = 100
         
 
     def update_punch(self):
@@ -133,7 +143,6 @@ class Fighter(pygame.sprite.Sprite):
             self.state = Fighter.IDLING
 
     def update_idling(self):
-
         self.image = self.image
         self.image = self.idle_images[int(self.idle_idx)]
         self.rect = self.image.get_rect()
@@ -159,11 +168,13 @@ class Background(pygame.sprite.Sprite):
 
         self.vertical = self.to = 0
         self.vel = 0
+        self.fighter = None
         self.add(groups)
         
     def update(self):
         _, _, t, _ = self.sheet.get_rect()
         new_pos = self.vertical + self.vel
+
         if new_pos >= 0 and new_pos <= t - X_MAX:
             self.vertical = new_pos
         
@@ -176,6 +187,7 @@ class Background(pygame.sprite.Sprite):
 
         self.image.blit(self.background, dest = (0,0))
         self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,640, 480))
+        
 
     def scroll_right(self):
         self.to = self.vertical + X_MAX
