@@ -1,3 +1,4 @@
+import time
 import sys
 
 import pygame
@@ -132,7 +133,7 @@ class Fighter(pygame.sprite.Sprite):
         self.direction = "right"
 
         self.punch_sound = pygame.mixer.Sound("sounds/woosh.wav")
-        self.punch_sound.set_volume(0.8)
+        self.punch_sound.set_volume(1)
 
         self.walk_in()
 
@@ -214,7 +215,8 @@ class Fighter(pygame.sprite.Sprite):
     def punch(self):
         if not self.walking_in:
             self.state = Fighter.PUNCHING
-            self.punch_sound.play(maxtime=100000000, loops=5)
+            self.punch_sound.play(maxtime=10000)
+
 
     def walk_right(self):
         if not self.walking_in:
@@ -346,7 +348,7 @@ class Background(pygame.sprite.Sprite):
 
         self.image.blit(self.background, dest = (0,0))
         self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
-        self.alpha -= 20
+        self.alpha -= 5
         if self.alpha >= 0:
             self.black.fill((0,0,0,self.alpha))
             self.image.blit(self.black, dest = (0,0))
