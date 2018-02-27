@@ -199,14 +199,11 @@ class Background(pygame.sprite.Sprite):
 
 def init_pygame(groups):
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
-    buildings = pygame.image.load("sprites/bg0.png").convert_alpha()
-
-    screen.blit(buildings, dest=(0,0), area = (0,0,640,480))
-    return screen, buildings
+    empty = pygame.Surface((X_MAX, Y_MAX))
+    return screen, empty
 
 
 def main():
-    window_x = 0
     everything = pygame.sprite.Group()
     clock = pygame.time.Clock()
 
@@ -227,12 +224,10 @@ def main():
                     pass
                 if event.key == K_a:
                     f.punch()
-                if event.key == K_UP:
-                    f.jump()
+
             if event.type == KEYUP:
                 if event.key == K_RIGHT:
                     f.idle()
-                    
 
 
         clock.tick(20)
