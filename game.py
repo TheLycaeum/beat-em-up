@@ -74,6 +74,9 @@ class Fighter(pygame.sprite.Sprite):
         self.punch_images.append(img)
         img = load_sprite(self.sheet, (162, 210), (1380, 432, 1380+162, 432+210))
         self.punch_images.append(img)
+        self.punch_images_right = self.punch_images
+        self.punch_images_left = [pygame.transform.flip(x, True, False) for x in self.punch_images_right]
+
 
 
         # Load walking images
@@ -115,9 +118,11 @@ class Fighter(pygame.sprite.Sprite):
         if self.direction == "right":
             self.idle_images = self.idle_images_right
             self.walking_images = self.walking_images_right
+            self.punch_images = self.punch_images_right
         if self.direction == "left":
             self.idle_images = self.idle_images_left
             self.walking_images = self.walking_images_left
+            self.punch_images = self.punch_images_left
 
         actions = {Fighter.PUNCHING : self.update_punch,
                    Fighter.IDLING : self.update_idling,
