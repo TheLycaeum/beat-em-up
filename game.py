@@ -93,7 +93,7 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.idle_images[int(self.idle_idx)]
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.enemy_pos
-        self.idle_idx += 0.25
+        self.idle_idx += 0.5
         self.idle_idx %= len(self.idle_images)
 
     def update_attack(self):
@@ -128,6 +128,8 @@ class Fighter(pygame.sprite.Sprite):
 
         self.direction = "right"
 
+        self.punch_sound = pygame.mixer.Sound("sounds/woosh.wav")
+        self.punch_sound.set_volume(0.4)
 
     def load_images(self):
         # Load idling images
@@ -197,6 +199,7 @@ class Fighter(pygame.sprite.Sprite):
 
     def punch(self):
         self.state = Fighter.PUNCHING
+        self.punch_sound.play(maxtime=10000)
 
     def walk_right(self):
         self.state = Fighter.WALKING_RIGHT
@@ -266,12 +269,13 @@ class Fighter(pygame.sprite.Sprite):
         if self.punch_idx == 0:
             self.state = Fighter.IDLING
 
+
     def update_idling(self):
         self.image = self.image
         self.image = self.idle_images[int(self.idle_idx)]
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.fighter_pos
-        self.idle_idx += 0.25
+        self.idle_idx += 0.5
         self.idle_idx %= len(self.idle_images)
 
 
@@ -320,11 +324,12 @@ class Background(pygame.sprite.Sprite):
 def init_pygame(groups):
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
     empty = pygame.Surface((X_MAX, Y_MAX))
+    pygame.mixer.init()
     return screen, empty
 
 
 def main():
-    everything = pygame.sprite.Group()
+    everything = pygame.sprite.OrderedUpdates()
     clock = pygame.time.Clock()
 
     screen, empty = init_pygame(everything)
