@@ -14,6 +14,96 @@ def load_sprite(sheet, surf_rect, sprite_rect):
     img.blit(sheet, dest = (0, 0), area = sprite_rect)
     return img
 
+class Enemy(pygame.sprite.Sprite):
+    IDLING = 0
+    WALKING = 1
+    ATTACKING = 2
+
+    def __init__(self, image, groups, pos, fighter):
+        super(Enemy, self).__init__()
+        self.sheet = pygame.image.load(image).convert()
+        colorkey = self.sheet.get_at((0,0))
+        self.sheet.set_colorkey(colorkey)
+        self.image = pygame.Surface((10,10), pygame.SRCALPHA, 32).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = pos
+        self.enemy_pos = pos
+        self.load_images()
+        self.state = Enemy.IDLING
+        self.add(groups)
+        self.fighter = fighter
+        self.direction = "left"
+    
+    def load_images(self):
+        self.idle_images = []
+        self.idle_idx = 0
+        img = load_sprite(self.sheet, (168, 194), (12, 478, 12+168, 478+194))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 190), (210, 482, 210+168, 482+190))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 190), (408, 482, 210+168, 482+190))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 192), (606, 480, 606+168, 480+192))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 194), (804, 478, 804+168, 478+194))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 196), (1002, 476, 1002+168, 476+196))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 198), (1200, 474, 1200+168, 474+198))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 198), (1398, 474, 1398+168, 474+198))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 198), (1596, 474, 1596+168, 474+198))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (168, 196), (1794, 476, 1794+168, 476+196))
+        self.idle_images.append(img)
+        self.idle_images_right = self.idle_images
+        self.idle_images_left = [pygame.transform.flip(x, True, False) for x in self.idle_images_right]
+
+
+    def ai(self):
+        f_x, f_y = self.fighter.rect.center
+        e_x, e_y = self.rect.center
+        
+        if f_x > e_x:
+            self.direction = "right"
+        else:
+            self.direction = "left"
+
+    def update(self):
+        ""
+        self.ai()
+        if self.direction == "right":
+            self.idle_images = self.idle_images_right
+        if self.direction == "left":
+            self.idle_images = self.idle_images_left
+
+
+        actions = {Enemy.ATTACKING : self.update_attack,
+                   Enemy.IDLING : self.update_idling,
+                   Enemy.WALKING: self.update_walking}
+        action = actions[self.state] 
+        action()
+
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+
+    def update_idling(self):
+        self.image = self.image
+        self.image = self.idle_images[int(self.idle_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+        self.idle_idx += 0.25
+        self.idle_idx %= len(self.idle_images)
+
+    def update_attack(self):
+        pass
+    def update_walking(self):
+        pass
+    
+
+
+
 class Fighter(pygame.sprite.Sprite):
     IDLING = 0
     PUNCHING = 1
@@ -181,7 +271,7 @@ class Fighter(pygame.sprite.Sprite):
         self.image = self.idle_images[int(self.idle_idx)]
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.fighter_pos
-        self.idle_idx += 0.5
+        self.idle_idx += 0.25
         self.idle_idx %= len(self.idle_images)
 
 
@@ -240,6 +330,7 @@ def main():
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
+    e = Enemy("sprites/enemy-gato.png", everything, (600, 450), f)
 
     while True:
         for event in pygame.event.get():
