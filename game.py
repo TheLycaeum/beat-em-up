@@ -17,7 +17,8 @@ def load_sprite(sheet, surf_rect, sprite_rect):
 class Fighter(pygame.sprite.Sprite):
     IDLING = 0
     PUNCHING = 1
-    WALKING = 2
+    WALKING_RIGHT = 2
+    WALKING_LEFT = 3
     
     
     def __init__(self, image, groups, pos, background):
@@ -34,7 +35,8 @@ class Fighter(pygame.sprite.Sprite):
         self.background = background
 
         self.fighter_pos = pos
-        self.push_back_to = 0
+
+        self.direction = "right"
 
 
     def load_images(self):
@@ -56,6 +58,8 @@ class Fighter(pygame.sprite.Sprite):
         img = load_sprite(self.sheet, (166, 210), (1118, 14, 1118+162, 14+210))
         self.idle_images.append(img)
         self.idle_images += list(reversed(self.idle_images))
+        self.idle_images_right = self.idle_images
+        self.idle_images_left = [pygame.transform.flip(x, True, False) for x in self.idle_images_right]
 
 
         # Load punching images
@@ -90,6 +94,9 @@ class Fighter(pygame.sprite.Sprite):
         self.walking_images.append(img)
         img = load_sprite(self.sheet, (150, 218), (968, 694, 968+150, 694+218))
         self.walking_images.append(img)
+        self.walking_images_right = self.walking_images
+        self.walking_images_left = [pygame.transform.flip(x, True, False) for x in self.walking_images_right]
+
 
 
     def idle(self):
@@ -98,39 +105,61 @@ class Fighter(pygame.sprite.Sprite):
     def punch(self):
         self.state = Fighter.PUNCHING
 
-    def walk(self):
-        self.state = Fighter.WALKING
+    def walk_right(self):
+        self.state = Fighter.WALKING_RIGHT
+
+    def walk_left(self):
+        self.state = Fighter.WALKING_LEFT
 
     def update(self):
+        if self.direction == "right":
+            self.idle_images = self.idle_images_right
+            self.walking_images = self.walking_images_right
+        if self.direction == "left":
+            self.idle_images = self.idle_images_left
+            self.walking_images = self.walking_images_left
+
         actions = {Fighter.PUNCHING : self.update_punch,
                    Fighter.IDLING : self.update_idling,
-                   Fighter.WALKING: self.update_walking}
+                   Fighter.WALKING_RIGHT: self.update_walking_right,
+                   Fighter.WALKING_LEFT: self.update_walking_left}
         action = actions[self.state] 
         action()
 
-        if self.push_back_to != 0:
-            self.push_back_to -= 50
-            x, y = self.fighter_pos 
-            x -= 150
-            self.fighter_pos = x, y
-
         self.rect = self.image.get_rect()
         self.rect.bottomleft = self.fighter_pos
 
-    def update_walking(self):
+    def update_walking_right(self):
         self.image = self.walking_images[int(self.walking_idx)]
         self.rect = self.image.get_rect()
         self.rect.bottomleft = self.fighter_pos
-        self.walking_idx += 0.5
+        self.walking_idx += 1
         self.walking_idx %= len(self.walking_images)
         x, y = self.fighter_pos
         x += self.walk_vel
         self.fighter_pos = x,y
-        # print ("Fighter position ", self.fighter_pos)
-        # print ("Sprite position ",  self.rect.bottomleft)
+
         if x == X_MAX*3.0/4:
             self.background.scroll_right()
-            self.push_back_to = 100
+            x, y = self.fighter_pos 
+            x -= 100
+            self.fighter_pos  = x, y
+
+    def update_walking_left(self):
+        self.image = self.walking_images[int(self.walking_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.bottomleft = self.fighter_pos
+        self.walking_idx += 1
+        self.walking_idx %= len(self.walking_images)
+        x, y = self.fighter_pos
+        x += self.walk_vel
+        self.fighter_pos = x,y
+
+        if x == X_MAX*1.0/16:
+            self.background.scroll_left()
+            x, y = self.fighter_pos 
+            x += 100
+            self.fighter_pos  = x, y
         
 
     def update_punch(self):
@@ -178,23 +207,19 @@ class Background(pygame.sprite.Sprite):
         if new_pos >= 0 and new_pos <= t - X_MAX:
             self.vertical = new_pos
         
-        if abs(self.vertical - self.to) < 300:
-            self.vel /= 1.5
-
         if abs(self.vertical - self.to) < 50:
             self.to = self.vertical
             self.vel = 0
 
         self.image.blit(self.background, dest = (0,0))
         self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,640, 480))
-        
 
     def scroll_right(self):
-        self.to = self.vertical + X_MAX
+        self.to = self.vertical + 50
         self.vel = 50
 
     def scroll_left(self):
-        self.to = self.vertical - X_MAX
+        self.to = self.vertical - 50
         self.vel = -50
 
 def init_pygame(groups):
@@ -217,16 +242,24 @@ def main():
                 sys.exit()
             if event.type == KEYDOWN:
                 if event.key == K_RIGHT:
-                    f.walk()
-                    pass
+                    if f.direction == "right":
+                        f.walk_right()
+                    else:
+                        f.walk_vel *= -1
+                        f.direction = "right"
+
                 if event.key == K_LEFT:
-                    b.scroll_left()
-                    pass
+                    if f.direction == "left":
+                        f.walk_left()
+                    else:
+                        f.walk_vel *= -1
+                        f.direction = "left"
+
                 if event.key == K_a:
                     f.punch()
 
             if event.type == KEYUP:
-                if event.key == K_RIGHT:
+                if event.key in [K_RIGHT, K_LEFT]:
                     f.idle()
 
 
