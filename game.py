@@ -237,7 +237,6 @@ class Fighter(pygame.sprite.Sprite):
 
         if self.walking_in:
             self.walking_in -= 1
-            print (self.walking_in)
             if self.walking_in == 0:
                 self.state = Fighter.IDLING
                 if pygame.mixer.get_init():
@@ -318,6 +317,10 @@ class Background(pygame.sprite.Sprite):
         colorkey = self.sheet.get_at((0,0))
         self.sheet.set_colorkey(colorkey)
 
+        self.black = pygame.Surface((X_MAX, Y_MAX)).convert_alpha()
+        self.black.fill((0,0,0,255))
+        self.alpha = 255
+
         self.image = pygame.Surface((X_MAX, Y_MAX),pygame.SRCALPHA, 32).convert_alpha()
         self.background = pygame.image.load(bgimage).convert()
         self.image.blit(self.background, dest = (0,0))
@@ -342,6 +345,10 @@ class Background(pygame.sprite.Sprite):
 
         self.image.blit(self.background, dest = (0,0))
         self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
+        self.alpha -= 20
+        if self.alpha >= 0:
+            self.black.fill((0,0,0,self.alpha))
+            self.image.blit(self.black, dest = (0,0))
 
     def scroll_right(self):
         self.to = self.vertical + 50
