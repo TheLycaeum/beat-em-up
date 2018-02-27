@@ -138,13 +138,13 @@ class Fighter(pygame.sprite.Sprite):
         self.image = self.walking_images[int(self.walking_idx)]
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.fighter_pos
-        self.walking_idx += 1
+        self.walking_idx += 0.5
         self.walking_idx %= len(self.walking_images)
         x, y = self.fighter_pos
         x += self.walk_vel
         self.fighter_pos = x,y
 
-        if x == X_MAX*3.0/4:
+        if abs(x - X_MAX*16.0/18) < 10:
             self.background.scroll_right()
             x, y = self.fighter_pos 
             x -= 100
@@ -154,13 +154,13 @@ class Fighter(pygame.sprite.Sprite):
         self.image = self.walking_images[int(self.walking_idx)]
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.fighter_pos
-        self.walking_idx += 1
+        self.walking_idx += 0.5
         self.walking_idx %= len(self.walking_images)
         x, y = self.fighter_pos
         x += self.walk_vel
         self.fighter_pos = x,y
 
-        if x == X_MAX*1.0/16:
+        if abs(x - X_MAX*1.0/16) < 10:
             self.background.scroll_left()
             x, y = self.fighter_pos 
             x += 100
