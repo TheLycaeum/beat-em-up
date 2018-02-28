@@ -31,14 +31,17 @@ class Enemy(pygame.sprite.Sprite):
         self.enemy_pos = pos
         self.load_images()
         self.state = Enemy.IDLING
+        self.state = Enemy.WALKING
         self.add(groups)
         self.fighter = fighter
+        self.walk_vel = 10
         self.direction = "left"
 
 
         
     
     def load_images(self):
+        # Load idle images
         self.idle_images = []
         self.idle_idx = 0
         img = load_sprite(self.sheet, (168, 194), (12, 478, 12+168, 478+194))
@@ -64,6 +67,32 @@ class Enemy(pygame.sprite.Sprite):
         self.idle_images_right = self.idle_images
         self.idle_images_left = [pygame.transform.flip(x, True, False) for x in self.idle_images_right]
 
+        # Load walking images
+        self.walking_images = []
+        self.walking_idx = 0
+        img = load_sprite(self.sheet, (154, 196), (12, 910, 19+154, 910+196))
+        self.walking_images.append(img)
+        img = load_sprite(self.sheet, (138, 200), (196, 906, 196+138, 906+200))
+        self.walking_images.append(img)
+        img = load_sprite(self.sheet, (138, 200), (364, 904, 196+138, 906+200))
+        self.walking_images.append(img)
+        img = load_sprite(self.sheet, (122, 204), (518, 902, 518+122, 902+204))
+        self.walking_images.append(img)
+
+        img = load_sprite(self.sheet, (128, 206), (670, 900, 518+128, 902+206))
+        self.walking_images.append(img)
+        img = load_sprite(self.sheet, (134, 204), (828, 902, 828+134, 902+204))
+        self.walking_images.append(img)
+
+        img = load_sprite(self.sheet, (140, 198), (992, 908, 992+140, 908+198))
+        self.walking_images.append(img)
+        img = load_sprite(self.sheet, (142, 196), (1162, 910, 1162+142, 910+196))
+        self.walking_images.append(img)
+        img = load_sprite(self.sheet, (142, 196), (1334, 910, 1334+142, 910+196))
+        self.walking_images.append(img)
+        img = load_sprite(self.sheet, (146, 194), (1506, 912, 1506+146, 912+194))
+        self.walking_images.append(img)
+        
 
     def ai(self):
         f_x, f_y = self.fighter.rect.center
@@ -100,9 +129,18 @@ class Enemy(pygame.sprite.Sprite):
         self.idle_idx += 0.5
         self.idle_idx %= len(self.idle_images)
 
-    def update_attack(self):
-        pass
     def update_walking(self):
+        self.image = self.walking_images[int(self.walking_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+        self.walking_idx += 0.5
+        self.walking_idx %= len(self.walking_images)
+        x, y = self.enemy_pos
+        x += self.walk_vel
+        self.enemy_pos = x,y
+
+
+    def update_attack(self):
         pass
     
 
