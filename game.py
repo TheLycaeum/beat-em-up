@@ -20,6 +20,7 @@ class Enemy(pygame.sprite.Sprite):
     IDLING = 0
     WALKING = 1
     ATTACKING = 2
+    IMPACTED = 3
 
     def __init__(self, image, groups, pos, fighter):
         super(Enemy, self).__init__()
@@ -102,7 +103,6 @@ class Enemy(pygame.sprite.Sprite):
         self.attack_idx = 0
         img = load_sprite(self.sheet, (154, 202), (4, 2984, 4+154, 2984+202))
         self.attack_images.append(img)
-
         img = load_sprite(self.sheet, (150, 200), (188, 2986, 188+150, 2986+200))
         self.attack_images.append(img)
         img = load_sprite(self.sheet, (220, 200), (368, 2986, 368+220, 2986+200))
@@ -116,6 +116,14 @@ class Enemy(pygame.sprite.Sprite):
         self.attack_images_right = self.attack_images
         self.attack_images_left = [pygame.transform.flip(x, True, False) for x in self.attack_images_right]
 
+        # Load impact images
+        self.impact_images = []
+        self.impact_idx = 0
+        img = load_sprite(self.sheet, (165, 192), (1916, 1146, 1916+165, 1146+192))
+        self.impact_images.append(img)
+        self.impact_images_right = self.impact_images
+        self.impact_images_left = [pygame.transform.flip(x, True, False) for x in self.impact_images_right]
+
 
 
     def ai(self):
@@ -128,7 +136,7 @@ class Enemy(pygame.sprite.Sprite):
             if not self.confronting:
                 # print (" Going to confront")
                 self.confronting = True
-                if random.random() < 0.7:
+                if random.random() < 0.9:
                     # print("  Punching")
                     self.punch_sound.play(maxtime=10000)
                     self.state = Enemy.ATTACKING
@@ -146,7 +154,8 @@ class Enemy(pygame.sprite.Sprite):
             # print("Walking")
             self.state = Enemy.WALKING
             
-        
+    def impact(self):
+        self.state = Enemy.IMPACTED
 
     def update(self):
         ""
@@ -155,21 +164,35 @@ class Enemy(pygame.sprite.Sprite):
             self.idle_images = self.idle_images_right
             self.walking_images = self.walking_images_right
             self.attack_images = self.attack_images_right
+            self.impact_images = self.impact_images_right
             self.walk_vel = 10
         if self.direction == "left":
             self.idle_images = self.idle_images_left
             self.walking_images = self.walking_images_left
             self.attack_images = self.attack_images_left
+            self.impact_images = self.impact_images_left
             self.walk_vel = -10
 
         actions = {Enemy.ATTACKING : self.update_attack,
-                   Enemy.IDLING : self.update_idling,
-                   Enemy.WALKING: self.update_walking}
+                   Enemy.IDLING    : self.update_idling,
+                   Enemy.WALKING   : self.update_walking,
+                   Enemy.IMPACTED  : self.update_impacted}
         action = actions[self.state] 
         action()
 
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.enemy_pos
+
+    def update_impacted(self):
+        self.image = self.image
+        self.image = self.impact_images[int(self.impact_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+        self.impact_idx += 0.5
+        self.impact_idx %= len(self.impact_images)
+        if self.impact_idx == 0:
+            self.state = Enemy.IDLING
+    
 
     def update_idling(self):
         self.image = self.image
@@ -283,8 +306,6 @@ class Fighter(pygame.sprite.Sprite):
         self.punch_images_right = self.punch_images
         self.punch_images_left = [pygame.transform.flip(x, True, False) for x in self.punch_images_right]
 
-
-
         # Load walking images
         self.walking_images = []
         self.walking_idx = 0
@@ -313,7 +334,6 @@ class Fighter(pygame.sprite.Sprite):
         self.impacted_images.append(img)
         # img = load_sprite(self.sheet, (144, 152), (572, 2418, 572+144, 2418+152))
         # self.impacted_images.append(img)
-
         self.impacted_images_right = self.impacted_images
         self.impacted_images_left = [pygame.transform.flip(x, True, False) for x in self.impacted_images_right]
 
@@ -489,7 +509,9 @@ def init_pygame(groups):
 def check_collisions(fighter, enemies):
     enemy = pygame.sprite.spritecollideany(fighter, enemies)
     if enemy:
-        if enemy.state == Enemy.ATTACKING:
+        if fighter.state == Fighter.PUNCHING:
+            enemy.impact()
+        elif enemy.state == Enemy.ATTACKING:
             fighter.impact()
         
     
@@ -497,12 +519,12 @@ def check_collisions(fighter, enemies):
 
 def main():
     everything = pygame.sprite.OrderedUpdates()
-    hero = pygame.sprite.Group()
+    # hero = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     clock = pygame.time.Clock()
 
     screen, empty = init_pygame(everything)
-    b = Background("sprites/bg0.png", "sprites/bg1.png", [hero, everything])
+    b = Background("sprites/bg0.png", "sprites/bg1.png", [everything])
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
 
     # while f.walking_in:
