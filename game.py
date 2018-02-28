@@ -132,7 +132,7 @@ class Fighter(pygame.sprite.Sprite):
 
         self.direction = "right"
 
-        self.punch_sound = pygame.mixer.Sound("sounds/woosh.wav")
+        self.punch_sound = pygame.mixer.Sound("audio/woosh.wav")
         self.punch_sound.set_volume(1)
 
         self.walk_in()
@@ -214,8 +214,8 @@ class Fighter(pygame.sprite.Sprite):
 
     def punch(self):
         if not self.walking_in:
-            self.state = Fighter.PUNCHING
             self.punch_sound.play(maxtime=10000)
+            self.state = Fighter.PUNCHING
 
 
     def walk_right(self):
@@ -241,10 +241,10 @@ class Fighter(pygame.sprite.Sprite):
             self.walking_in -= 1
             if self.walking_in == 0:
                 self.state = Fighter.IDLING
-                if pygame.mixer.get_init():
-                    pygame.mixer.music.load("music/level-1.mp3")
-                    pygame.mixer.music.set_volume(0.8)
-                    pygame.mixer.music.play(-1)
+                # if pygame.mixer.get_init():
+                #     pygame.mixer.music.load("music/level-1.mp3")
+                #     pygame.mixer.music.set_volume(0.2)
+                #     pygame.mixer.music.play(-1)
                 self.walk_vel = 20
 
             
