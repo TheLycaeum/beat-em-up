@@ -1,5 +1,6 @@
 import time
 import sys
+import random
 
 import pygame
 from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, \
@@ -36,7 +37,10 @@ class Enemy(pygame.sprite.Sprite):
         self.fighter = fighter
         self.walk_vel = 10
         self.direction = "left"
+        self.confronting = False
 
+        self.punch_sound = pygame.mixer.Sound("audio/woosh.wav")
+        self.punch_sound.set_volume(1)
 
         
     
@@ -78,12 +82,10 @@ class Enemy(pygame.sprite.Sprite):
         self.walking_images.append(img)
         img = load_sprite(self.sheet, (122, 204), (518, 902, 518+122, 902+204))
         self.walking_images.append(img)
-
         img = load_sprite(self.sheet, (128, 206), (670, 900, 518+128, 902+206))
         self.walking_images.append(img)
         img = load_sprite(self.sheet, (134, 204), (828, 902, 828+134, 902+204))
         self.walking_images.append(img)
-
         img = load_sprite(self.sheet, (140, 198), (992, 908, 992+140, 908+198))
         self.walking_images.append(img)
         img = load_sprite(self.sheet, (142, 196), (1162, 910, 1162+142, 910+196))
@@ -92,25 +94,73 @@ class Enemy(pygame.sprite.Sprite):
         self.walking_images.append(img)
         img = load_sprite(self.sheet, (146, 194), (1506, 912, 1506+146, 912+194))
         self.walking_images.append(img)
-        
+        self.walking_images_right = self.walking_images
+        self.walking_images_left = [pygame.transform.flip(x, True, False) for x in self.walking_images_right]
+
+        # Load kicking images
+        self.attack_images = []
+        self.attack_idx = 0
+        img = load_sprite(self.sheet, (154, 202), (4, 2984, 4+154, 2984+202))
+        self.attack_images.append(img)
+
+        img = load_sprite(self.sheet, (150, 200), (188, 2986, 188+150, 2986+200))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (220, 200), (368, 2986, 368+220, 2986+200))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (229, 200), (618, 2986, 618+229, 2986+200))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (192, 200), (876, 2986, 876+192, 2986+200))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (140, 198), (1098, 2988, 1098+140, 2988+198))
+        self.attack_images.append(img)
+        self.attack_images_right = self.attack_images
+        self.attack_images_left = [pygame.transform.flip(x, True, False) for x in self.attack_images_right]
+
+
 
     def ai(self):
         f_x, f_y = self.fighter.rect.center
         e_x, e_y = self.rect.center
-        
-        if f_x > e_x:
-            self.direction = "right"
+
+        distance = abs(f_x - e_x)
+        if distance < 150:
+            # print ("Close")
+            if not self.confronting:
+                # print (" Going to confront")
+                self.confronting = True
+                if random.random() < 0.7:
+                    # print("  Punching")
+                    self.punch_sound.play(maxtime=10000)
+                    self.state = Enemy.ATTACKING
+                else:
+                    # print("  Idling")
+                    self.state = Enemy.IDLING
         else:
-            self.direction = "left"
+            self.confronting = False
+            if f_x > e_x:
+                # print ("Turn right")
+                self.direction = "right"
+            else:
+                # print ("Turn left")
+                self.direction = "left"
+            # print("Walking")
+            self.state = Enemy.WALKING
+            
+        
 
     def update(self):
         ""
         self.ai()
         if self.direction == "right":
             self.idle_images = self.idle_images_right
+            self.walking_images = self.walking_images_right
+            self.attack_images = self.attack_images_right
+            self.walk_vel = 10
         if self.direction == "left":
             self.idle_images = self.idle_images_left
-
+            self.walking_images = self.walking_images_left
+            self.attack_images = self.attack_images_left
+            self.walk_vel = -10
 
         actions = {Enemy.ATTACKING : self.update_attack,
                    Enemy.IDLING : self.update_idling,
@@ -128,6 +178,8 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.midbottom = self.enemy_pos
         self.idle_idx += 0.5
         self.idle_idx %= len(self.idle_images)
+        if self.idle_idx == 0:
+            self.confronting = False
 
     def update_walking(self):
         self.image = self.walking_images[int(self.walking_idx)]
@@ -141,8 +193,15 @@ class Enemy(pygame.sprite.Sprite):
 
 
     def update_attack(self):
-        pass
-    
+        self.image = self.attack_images[int(self.attack_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+        self.attack_idx += 1
+        self.attack_idx %= len(self.attack_images)
+        if self.attack_idx == 0:
+            self.state = Enemy.IDLING
+            self.confronting = False
+
 
 
 
@@ -247,22 +306,18 @@ class Fighter(pygame.sprite.Sprite):
 
 
     def idle(self):
-        if not self.walking_in:
-            self.state = Fighter.IDLING
+        self.state = Fighter.IDLING
 
     def punch(self):
-        if not self.walking_in:
-            self.punch_sound.play(maxtime=10000)
-            self.state = Fighter.PUNCHING
+        self.punch_sound.play(maxtime=10000)
+        self.state = Fighter.PUNCHING
 
 
     def walk_right(self):
-        if not self.walking_in:
-            self.state = Fighter.WALKING_RIGHT
+        self.state = Fighter.WALKING_RIGHT
 
     def walk_left(self):
-        if not self.walking_in:
-            self.state = Fighter.WALKING_LEFT
+        self.state = Fighter.WALKING_LEFT
 
     def update(self):
         if self.direction == "right":
@@ -283,9 +338,8 @@ class Fighter(pygame.sprite.Sprite):
                 #     pygame.mixer.music.load("music/level-1.mp3")
                 #     pygame.mixer.music.set_volume(0.2)
                 #     pygame.mixer.music.play(-1)
-                self.walk_vel = 20
+                self.walk_vel = 25
 
-            
 
         actions = {Fighter.PUNCHING : self.update_punch,
                    Fighter.IDLING : self.update_idling,
@@ -406,15 +460,27 @@ def init_pygame(groups):
     empty = pygame.Surface((X_MAX, Y_MAX))
     return screen, empty
 
+def check_collisions():
+    pass
 
 def main():
     everything = pygame.sprite.OrderedUpdates()
+    enemies = pygame.sprite.Group()
     clock = pygame.time.Clock()
 
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", everything)
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
-    e = Enemy("sprites/enemy-gato.png", everything, (600, 450), f)
+
+    while f.walking_in:
+        clock.tick(20)
+        everything.clear(screen, empty)
+        everything.update()
+        everything.draw(screen)
+        pygame.display.flip()
+
+
+    e = Enemy("sprites/enemy-gato.png", [everything, enemies], (1400, 450), f)
 
     while True:
         for event in pygame.event.get():
@@ -442,6 +508,7 @@ def main():
                 if event.key in [K_RIGHT, K_LEFT]:
                     f.idle()
 
+        check_collisions()
 
         clock.tick(20)
 
