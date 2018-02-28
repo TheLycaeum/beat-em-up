@@ -765,6 +765,7 @@ def main():
     enemies = pygame.sprite.Group()
     clock = pygame.time.Clock()
 
+    enemy_count = 3
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", [everything])
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
@@ -785,7 +786,11 @@ def main():
         if not death_counter:
             sys.exit(0)
         if len(enemies) != 1:
-            Enemy("sprites/enemy-gato.png", [everything, enemies], (random.choice([-150, 1350]), 450), f)
+            if enemy_count:
+                Enemy("sprites/enemy-gato.png", [everything, enemies], (random.choice([-150, 1350]), 450), f)
+                enemy_count -= 1
+            else:
+                print ("Boss")
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 sys.exit()
