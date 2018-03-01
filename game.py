@@ -877,5 +877,11 @@ def main():
             
 
 if __name__ == "__main__":
+    print """
+    <- to move left
+    -> to move right
 
+    a to hit
+    s to kick
+    """
     main()
