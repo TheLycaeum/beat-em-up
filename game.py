@@ -514,14 +514,20 @@ class Fighter(pygame.sprite.Sprite):
         img = load_sprite(self.sheet, (194, 146), (1316, 276, 1316+194, 276+146))
         self.dying_images.append(img)
         img = load_sprite(self.sheet, (252, 146), (1784, 276, 1784+252, 276+146))
+        img2 = pygame.Surface((252, 206), pygame.SRCALPHA, 32).convert_alpha()
         self.dying_images.append(img)
         self.dying_images.append(img)
         self.dying_images.append(img)
         self.dying_images.append(img)
+        self.dying_images.append(img2)
         self.dying_images.append(img)
+        self.dying_images.append(img2)
         self.dying_images.append(img)
+        self.dying_images.append(img2)
         self.dying_images.append(img)
+        self.dying_images.append(img2)
         self.dying_images.append(img)
+        self.dying_images.append(img2)
 
         self.dying_images_right = self.dying_images
         self.dying_images_left = [pygame.transform.flip(x, True, False) for x in self.dying_images_right]
