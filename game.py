@@ -164,48 +164,17 @@ class Enemy(pygame.sprite.Sprite):
         self.attack_images_left = [pygame.transform.flip(x, True, False) for x in self.attack_images_right]
 
         # Load impact images
-        self.impact_images = []
+        self.impact_images = load_sheet(self.sheet, (1721, 1143), (2279, 1338), self.sheet.get_at((0,0)))
         self.impact_idx = 0
-        img = load_sprite(self.sheet, (165, 192), (1916, 1146, 1916+165, 1146+192))
-        self.impact_images.append(img)
         self.impact_images_right = self.impact_images
         self.impact_images_left = [pygame.transform.flip(x, True, False) for x in self.impact_images_right]
 
         #Load dying images
-        self.dying_images = []
+        self.dying_images = load_sheet(self.sheet, (1734, 728), (3420, 898), self.sheet.get_at((0,0)))
         self.dying_idx = 0
-        img = load_sprite(self.sheet, (208, 170), (1734, 728, 1734+208, 728+170))
-        self.dying_images.append(img)
-
-        img = load_sprite(self.sheet, (208, 170), (1972, 728, 1972+208, 728+170))
-        self.dying_images.append(img)
-
-        img = load_sprite(self.sheet, (232, 170), (2210, 728, 2210+232, 728+170))
-        self.dying_images.append(img)
-
-        img = load_sprite(self.sheet, (208, 180), (2472, 728, 2472+208, 728+180))
-        self.dying_images.append(img)
-
-        img = load_sprite(self.sheet, (208, 170), (2682, 728, 2682+208, 728+170))
-        self.dying_images.append(img)
-
-
-        img = load_sprite(self.sheet, (208, 170), (2943, 728, 2943+208, 728+170))
-        self.dying_images.append(img)
-
-        img = load_sprite(self.sheet, (262, 170), (3146, 728, 3146+262, 728+170))
         img2 = pygame.Surface((262, 170), pygame.SRCALPHA, 32).convert_alpha()
-        self.dying_images.append(img)
-        self.dying_images.append(img)
-        self.dying_images.append(img)
-        self.dying_images.append(img2)
-        self.dying_images.append(img)
-        self.dying_images.append(img2)
-        self.dying_images.append(img)
-        self.dying_images.append(img2)
-        self.dying_images.append(img)
-        self.dying_images.append(img2)
-
+        # For a flickering effect after death
+        self.dying_images.extend([self.dying_images[-1], img2]*4)
         self.dying_images_right = self.dying_images
         self.dying_images_left = [pygame.transform.flip(x, True, False) for x in self.dying_images_right]
 
@@ -280,11 +249,11 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.dying_images[int(self.dying_idx)]
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.enemy_pos
-        self.dying_idx += 1
+        self.dying_idx += 0.25
         self.dying_idx %= len(self.dying_images)
         if self.dying_idx <= 6:
             x, y = self.enemy_pos
-            x -= (self.walk_vel * 6)
+            x -= (self.walk_vel * 1)
             self.enemy_pos = x, y
         if self.dying_idx == 4:
             self.death_sound.play()
@@ -848,8 +817,7 @@ def main():
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
     EnergyBar((10,10), everything, f.energy, f)
     death_counter = 20
-    # boss = Boss("sprites/boss.png", [everything, enemies], (850, 450), f)
-    # EnergyBar((10,40), everything, boss.energy, boss)
+
     while f.walking_in:
         clock.tick(20)
         everything.clear(screen, empty)
@@ -868,7 +836,9 @@ def main():
                 Enemy("sprites/enemy-gato.png", [everything, enemies], (random.choice([-150, 1350]), 450), f)
                 enemy_count -= 1
             else:
-                pass
+                boss = Boss("sprites/boss.png", [everything, enemies], (850, 450), f)
+                EnergyBar((10,40), everything, boss.energy, boss)
+
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
