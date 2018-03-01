@@ -315,40 +315,46 @@ class Enemy(pygame.sprite.Sprite):
 
 
 class Boss(Enemy):
-
+    INTRO = "intro"
     def __repr__(self):
         return "Boss ({}, {})".format(self.state, self.energy)
 
     def __init__(self, image, groups, pos, fighter):
+        s = time.time()
         super(Boss, self).__init__(image, groups, pos, fighter)
-        self.state = Enemy.IDLING
-        self.energy = 100
-        self.direction = "left"
+        self.state = Boss.INTRO
+        self.energy = 50
+        self.death_sound = pygame.mixer.Sound("audio/boss-scream.wav")
+        self.death_sound.set_volume(2)
+        self.direction = "right"
+        e = time.time()
+        # print ("Time taken ", e - s)
+        
 
     def load_images(self):
         # Load idling images
-        self.idle_images = []
+        self.idle_images = load_sheet(self.sheet, (0, 0), (2125, 288), self.sheet.get_at((0,0)))
         self.idle_idx = 0
-        img = load_sprite(self.sheet, (225, 288), (0, 0, 225, 288))
-        self.idle_images.append(img)
-        img = load_sprite(self.sheet, (221, 288), (269, 0, 269+221, 288))
-        self.idle_images.append(img)
-        img = load_sprite(self.sheet, (216, 288), (552, 0, 552+216, 288))
-        self.idle_images.append(img)
-        img = load_sprite(self.sheet, (213, 288), (830, 0, 552+213, 288))
-        self.idle_images.append(img)
-        img = load_sprite(self.sheet, (220, 288), (1080, 0, 1080+220, 288))
-        self.idle_images.append(img)
-        img = load_sprite(self.sheet, (223, 288), (1345, 0, 1345+223, 288))
-        self.idle_images.append(img)
-        img = load_sprite(self.sheet, (228, 288), (1627, 0, 1627+228, 288))
-        self.idle_images.append(img)
-        img = load_sprite(self.sheet, (228, 288), (1897, 0, 1897+228, 288))
-        self.idle_images.append(img)
         self.idle_images_right = self.idle_images
         self.idle_images_left = [pygame.transform.flip(x, True, False) for x in self.idle_images_right]
 
+        # Load intro images
+        self.intro_images = list(reversed(load_sheet(self.sheet, (0, 1921), (2344, 2442), self.sheet.get_at((0,0)))))
+        self.intro_idx = 0
+
         # Load walking images
+        self.walking_images = load_sheet(self.sheet, (0,1280), (3135, 1568), self.sheet.get_at((0,0)))
+        self.walking_idx = 0
+        self.walking_images_right = self.walking_images
+        self.walking_images_left = [pygame.transform.flip(x, True, False) for x in self.walking_images_right]
+
+        # Load dying images
+        self.dying_images = load_sheet(self.sheet, (0, 5017), (2965, 5309), self.sheet.get_at((0,0)))
+        self.dying_images.extend(load_sheet(self.sheet, (3039, 5228), (4755, 5335), self.sheet.get_at((0,0))))
+        self.dying_images.extend([self.dying_images[-1]]*4)
+        self.dying_idx = 0
+        self.dying_images_right = self.dying_images
+        self.dying_images_left = [pygame.transform.flip(x, True, False) for x in self.dying_images_right]
 
         # Load impacted images
         self.impact_images = []
@@ -400,6 +406,50 @@ class Boss(Enemy):
         self.attack_images_right = self.attack_images
         self.attack_images_left = [pygame.transform.flip(x, True, False) for x in self.attack_images_right]
 
+    def update_dying(self):
+        self.image = self.image
+        self.image = self.dying_images[int(self.dying_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+        self.dying_idx += 0.25
+        self.dying_idx %= len(self.dying_images)
+        if self.dying_idx == 8:
+            self.death_sound.play()
+        if self.dying_idx == 0:
+            self.kill()
+        game_state['success'] = True
+
+
+    def update_walking(self):
+        self.image = self.walking_images[int(self.walking_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+        self.walking_idx += 1
+        self.walking_idx %= len(self.walking_images)
+        x, y = self.enemy_pos
+        x += self.walk_vel
+        self.enemy_pos = x,y
+
+    def update(self):
+        if self.state == Boss.INTRO:
+            self.update_intro()
+        else:
+            super(Boss, self).update()
+
+    def update_intro(self):
+        self.image = self.intro_images[int(self.intro_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
+        self.intro_idx += 1
+        self.intro_idx %= len(self.intro_images)
+        x, y = self.enemy_pos
+        y += self.walk_vel/2
+        self.enemy_pos = x,y
+        if self.intro_idx == 0:
+            self.state = Enemy.IDLING
+            self.enemy_pos = x,450
+    
+
 
 
 
@@ -418,73 +468,6 @@ class Boss(Enemy):
             # if self.fighter.state == Fighter.IMPACTED:
             #     print ("Just hit ")
 
-
-
-    def ai(self):
-        if self.state == Enemy.DYING:
-            return
-        f_x, f_y = self.fighter.rect.center
-        e_x, e_y = self.rect.center
-        self.state = Enemy.ATTACKING
-
-        # distance = abs(f_x - e_x)
-        # if distance < 150:
-        #     # print ("Close")
-        #     if not self.confronting:
-        #         # print (" Going to confront")
-        #         self.confronting = True
-        #         if random.random() < 0.9:
-        #             # print("  Punching")
-        #             self.punch_sound.play(maxtime=10000)
-        #             self.state = Enemy.ATTACKING
-        #         else:
-        #             # print("  Idling")
-        #             self.state = Enemy.IDLING
-        # else:
-            # self.confronting = False
-        if f_x > e_x:
-            # print ("Turn right")
-            self.direction = "right"
-        else:
-            # print ("Turn left")
-            self.direction = "left"
-            # print("Walking")
-            # self.state = Enemy.WALKING
-
-
-        
-    def update(self):
-        ""
-        if self.energy <= 0:
-            self.state = Enemy.DYING
-
-        self.ai()
-
-        if self.direction == "right":
-            self.idle_images = self.idle_images_right
-            # self.walking_images = self.walking_images_right
-            self.attack_images = self.attack_images_right
-            self.impact_images = self.impact_images_right
-            # self.dying_images = self.dying_images_right
-            self.walk_vel = abs(self.walk_vel)
-        if self.direction == "left":
-            self.idle_images = self.idle_images_left
-            # self.walking_images = self.walking_images_left
-            self.attack_images = self.attack_images_left
-            self.impact_images = self.impact_images_left
-            # self.dying_images = self.dying_images_left
-            self.walk_vel = -abs(self.walk_vel)
-
-        actions = {Enemy.ATTACKING : self.update_attack,
-                   Enemy.IDLING    : self.update_idling,
-                   Enemy.WALKING   : self.update_walking,
-                   Enemy.IMPACTED  : self.update_impacted,
-                   Enemy.DYING     : self.update_dying}
-        action = actions[self.state] 
-        action()
-
-        self.rect = self.image.get_rect()
-        self.rect.midbottom = self.enemy_pos
 
 
 
@@ -769,6 +752,7 @@ class Background(pygame.sprite.Sprite):
 
         self.image.blit(self.background, dest = (0,0))
         self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
+        self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
         self.alpha -= 5
         if self.alpha >= 0:
             self.black.fill((0,0,0,self.alpha))
@@ -777,7 +761,6 @@ class Background(pygame.sprite.Sprite):
     def scroll_right(self):
         self.to = self.vertical + 100
         self.vel = 50
-
 
     def scroll_left(self):
         self.to = self.vertical - 100
@@ -811,12 +794,13 @@ def main():
     enemies = pygame.sprite.Group()
     clock = pygame.time.Clock()
 
-    enemy_count = 3
+    boss = False
+    boss_counter = 100
     screen, empty = init_pygame(everything)
     b = Background("sprites/bg0.png", "sprites/bg1.png", [everything])
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
     EnergyBar((10,10), everything, f.energy, f)
-    death_counter = 20
+    death_counter = 75
 
     while f.walking_in:
         clock.tick(20)
@@ -827,17 +811,30 @@ def main():
 
 
     while True:
-        if 'over' in game_state:
-            death_counter -=1
-        if not death_counter:
+        if death_counter == 0:
             sys.exit(0)
-        if len(enemies) != 1:
-            if enemy_count:
-                Enemy("sprites/enemy-gato.png", [everything, enemies], (random.choice([-150, 1350]), 450), f)
-                enemy_count -= 1
-            else:
+        if 'over' in game_state or 'success' in game_state:
+            death_counter -=1
+        
+        if b.vertical > 3000 and not boss:
+            if boss_counter == 100:
+                if pygame.mixer.get_init():
+                    pygame.mixer.fadeout(100)
+                for i in enemies:
+                    i.state = Enemy.DYING
+            elif boss_counter == 70:
+                if pygame.mixer.get_init():
+                    pygame.mixer.music.load("music/boss-1.mp3")
+                    pygame.mixer.music.set_volume(0.4)
+                    pygame.mixer.music.play(-1)
+            elif boss_counter == 0:
                 boss = Boss("sprites/boss.png", [everything, enemies], (850, 450), f)
                 EnergyBar((10,40), everything, boss.energy, boss)
+            boss_counter -= 1
+        else:
+            if len(enemies) != 1 and 'over' not in game_state:
+                Enemy("sprites/enemy-gato.png", [everything, enemies], (random.choice([-150, 1350]), 450), f)
+            
 
 
         for event in pygame.event.get():
