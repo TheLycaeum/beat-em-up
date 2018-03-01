@@ -646,7 +646,6 @@ class Fighter(pygame.sprite.Sprite):
         self.walking_idx += 0.5
         self.walking_idx %= len(self.walking_images)
         x, y = self.fighter_pos
-        print (x, abs(x - X_MAX*1.0/16))
         if abs(x - X_MAX*1.0/16) >= 20:
             x += self.walk_vel
             self.fighter_pos = x,y
