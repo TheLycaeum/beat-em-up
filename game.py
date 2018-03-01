@@ -19,6 +19,7 @@ def load_sprite(sheet, surf_rect, sprite_rect):
 
 game_state = {}
 
+
 class EnergyBar(pygame.sprite.Sprite):
     def __init__(self, pos, groups, full, fighter):
         self.max_width = X_MAX-20
@@ -360,6 +361,158 @@ class Enemy(pygame.sprite.Sprite):
             # print ("Fighter is (over) {}".format(self.fighter.state))
             # if self.fighter.state == Fighter.IMPACTED:
             #     print ("Just hit ")
+
+
+class Boss(Enemy):
+
+    def __repr__(self):
+        return "Boss ({}, {})".format(self.state, self.energy)
+
+    def __init__(self, image, groups, pos, fighter):
+        super(Boss, self).__init__(image, groups, pos, fighter)
+        self.state = Enemy.IDLING
+        self.energy = 100
+
+    def load_images(self):
+        # Load idling images
+        self.idle_images = []
+        self.idle_idx = 0
+        img = load_sprite(self.sheet, (225, 288), (0, 0, 225, 288))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (221, 288), (269, 0, 269+221, 288))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (216, 288), (552, 0, 552+216, 288))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (213, 288), (830, 0, 552+213, 288))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (220, 288), (1080, 0, 1080+220, 288))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (223, 288), (1345, 0, 1345+223, 288))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (228, 288), (1627, 0, 1627+228, 288))
+        self.idle_images.append(img)
+        img = load_sprite(self.sheet, (228, 288), (1897, 0, 1897+228, 288))
+        self.idle_images.append(img)
+        self.idle_images_right = self.idle_images
+        self.idle_images_left = [pygame.transform.flip(x, True, False) for x in self.idle_images_right]
+
+        self.impact_images = []
+        self.impact_idx = 0
+        img = load_sprite(self.sheet, (188, 282), (12, 5017, 12+188, 5017+282))
+        self.impact_images.append(img)
+        img = load_sprite(self.sheet, (196, 282), (282, 5017, 282+196, 5017+282))
+        self.impact_images.append(img)
+        img = load_sprite(self.sheet, (229, 282), (567, 5017, 567+229, 5017+282))
+        self.impact_images.append(img)
+        img = load_sprite(self.sheet, (215, 282), (844, 5017, 844+215, 5017+282))
+        self.impact_images.append(img)
+        self.impact_images_right = self.impact_images
+        self.impact_images_left = [pygame.transform.flip(x, True, False) for x in self.impact_images_right]
+
+
+        self.attack_images = []
+        self.attack_idx = 0
+        img = load_sprite(self.sheet, (176, 284), (54, 4014, 54+176    ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (190, 284), (340, 4014, 340+190     ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (209, 284), (622, 4014, 622+209     ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (204, 284), (895, 4014, 895+204      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (224, 284), (1165, 4014,1165+224      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (239, 284), (1442, 4014, 1442+239      ,4014+284))
+        self.attack_images.append(img)
+
+        img = load_sprite(self.sheet, (255, 284), (1755, 4014, 1755+255      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (381, 284), (2065, 4014, 2065+381      ,4014+284))
+        self.attack_images.append(img)
+
+        img = load_sprite(self.sheet, (371, 284), (2490, 4014, 2490+371      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (348, 284), (2917, 4014, 2917+348      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (265, 284), (3324, 4014, 3324+265      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (277, 284), (3639, 4014, 3639+277      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (291, 284), (3975, 4014, 3975+291      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (268, 284), (4311, 4014, 4311+268      ,4014+284))
+        self.attack_images.append(img)
+        img = load_sprite(self.sheet, (244, 284), (4632, 4014, 4632+244      ,4014+284))
+        self.attack_images.append(img)
+        self.attack_images_right = self.attack_images
+        self.attack_images_left = [pygame.transform.flip(x, True, False) for x in self.attack_images_right]
+
+
+    def ai(self):
+        if self.state == Enemy.DYING:
+            return
+        f_x, f_y = self.fighter.rect.center
+        e_x, e_y = self.rect.center
+        self.state = Enemy.ATTACKING
+
+        # distance = abs(f_x - e_x)
+        # if distance < 150:
+        #     # print ("Close")
+        #     if not self.confronting:
+        #         # print (" Going to confront")
+        #         self.confronting = True
+        #         if random.random() < 0.9:
+        #             # print("  Punching")
+        #             self.punch_sound.play(maxtime=10000)
+        #             self.state = Enemy.ATTACKING
+        #         else:
+        #             # print("  Idling")
+        #             self.state = Enemy.IDLING
+        # else:
+            # self.confronting = False
+        if f_x > e_x:
+            # print ("Turn right")
+            self.direction = "right"
+        else:
+            # print ("Turn left")
+            self.direction = "left"
+            # print("Walking")
+            # self.state = Enemy.WALKING
+
+
+        
+    def update(self):
+        ""
+        if self.energy <= 0:
+            self.state = Enemy.DYING
+
+        self.ai()
+
+        if self.direction == "right":
+            self.idle_images = self.idle_images_right
+            # self.walking_images = self.walking_images_right
+            # self.attack_images = self.attack_images_right
+            self.impact_images = self.impact_images_right
+            # self.dying_images = self.dying_images_right
+            self.walk_vel = abs(self.walk_vel)
+        if self.direction == "left":
+            self.idle_images = self.idle_images_left
+            # self.walking_images = self.walking_images_left
+            # self.attack_images = self.attack_images_left
+            self.impact_images = self.impact_images_left
+            # self.dying_images = self.dying_images_left
+            self.walk_vel = -abs(self.walk_vel)
+
+        actions = {Enemy.ATTACKING : self.update_attack,
+                   Enemy.IDLING    : self.update_idling,
+                   Enemy.WALKING   : self.update_walking,
+                   Enemy.IMPACTED  : self.update_impacted,
+                   Enemy.DYING     : self.update_dying}
+        action = actions[self.state] 
+        action()
+
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.enemy_pos
 
 
 
@@ -776,7 +929,8 @@ def main():
     f = Fighter("sprites/fighter-terry.png", everything, (100, 450), b)
     EnergyBar((10,10), everything, f.energy, f)
     death_counter = 20
-
+    boss = Boss("sprites/boss.png", [everything, enemies], (850, 450), f)
+    EnergyBar((10,40), everything, boss.energy, boss)
     while f.walking_in:
         clock.tick(20)
         everything.clear(screen, empty)
@@ -795,7 +949,8 @@ def main():
                 Enemy("sprites/enemy-gato.png", [everything, enemies], (random.choice([-150, 1350]), 450), f)
                 enemy_count -= 1
             else:
-                print ("Boss")
+                pass
+
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 sys.exit()
