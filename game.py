@@ -4,11 +4,13 @@ import random
 
 import pygame
 from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, \
-    K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN, FULLSCREEN, RLEACCEL, K_a, K_s
+    K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN, FULLSCREEN, RLEACCEL, K_a, K_s, HWSURFACE
 
 
 X_MAX = 1280
 Y_MAX = 480
+
+character_sprites = {}
 
 
 def load_sheet(sheet, top_left, bottom_right, clear_col, debug = False):
@@ -110,6 +112,7 @@ class Enemy(pygame.sprite.Sprite):
     ATTACKING = "attacking"
     IMPACTED = "impacted"
     DYING = "dying"
+    sprite_cache = None
 
     def __repr__(self):
         return "Enemy ({}, {})".format(self.state, self.energy)
@@ -143,40 +146,68 @@ class Enemy(pygame.sprite.Sprite):
         
     
     def load_images(self):
-        # Load idle images
-        self.idle_images = []
-        self.idle_idx = 0
-        self.idle_images = load_sheet(self.sheet, (12, 478), (1962, 672), self.sheet.get_at((0,0)))
-        self.idle_images += list(reversed(self.idle_images))
-        self.idle_images_right = self.idle_images
-        self.idle_images_left = [pygame.transform.flip(x, True, False) for x in self.idle_images_right]
 
-        # Load walking images
-        self.walking_images = load_sheet(self.sheet, (0, 894), (1652, 1106), self.sheet.get_at((0,0)))
-        self.walking_idx = 0
-        self.walking_images_right = self.walking_images
-        self.walking_images_left = [pygame.transform.flip(x, True, False) for x in self.walking_images_right]
+        if Enemy.sprite_cache:
+             (self.idle_images_right,
+              self.idle_images_left,
+              self.walking_images_right,
+              self.walking_images_left,
+              self.attack_images_right,
+              self.attack_images_left,
+              self.impact_images_right,
+              self.impact_images_left,
+              self.dying_images_right,
+              self.dying_images_left) = Enemy.sprite_cache
+             
+             self.idle_idx = self.walking_idx = self.impact_idx = self.attack_idx = self.dying_idx = 0
 
-        # Load kicking images
-        self.attack_images = load_sheet(self.sheet, (0, 2984), (1652, 3186 ), self.sheet.get_at((0,0)))
-        self.attack_idx = 0
-        self.attack_images_right = self.attack_images
-        self.attack_images_left = [pygame.transform.flip(x, True, False) for x in self.attack_images_right]
+        else:
 
-        # Load impact images
-        self.impact_images = load_sheet(self.sheet, (1721, 1143), (2279, 1338), self.sheet.get_at((0,0)))
-        self.impact_idx = 0
-        self.impact_images_right = self.impact_images
-        self.impact_images_left = [pygame.transform.flip(x, True, False) for x in self.impact_images_right]
+            # Load idle images
+            self.idle_images = []
+            self.idle_idx = 0
+            self.idle_images = load_sheet(self.sheet, (12, 478), (1962, 672), self.sheet.get_at((0,0)))
+            self.idle_images += list(reversed(self.idle_images))
+            self.idle_images_right = self.idle_images
+            self.idle_images_left = [pygame.transform.flip(x, True, False) for x in self.idle_images_right]
 
-        #Load dying images
-        self.dying_images = load_sheet(self.sheet, (1734, 728), (3420, 898), self.sheet.get_at((0,0)))
-        self.dying_idx = 0
-        img2 = pygame.Surface((262, 170), pygame.SRCALPHA, 32).convert_alpha()
-        # For a flickering effect after death
-        self.dying_images.extend([self.dying_images[-1], img2]*4)
-        self.dying_images_right = self.dying_images
-        self.dying_images_left = [pygame.transform.flip(x, True, False) for x in self.dying_images_right]
+            # Load walking images
+            self.walking_images = load_sheet(self.sheet, (0, 894), (1652, 1106), self.sheet.get_at((0,0)))
+            self.walking_idx = 0
+            self.walking_images_right = self.walking_images
+            self.walking_images_left = [pygame.transform.flip(x, True, False) for x in self.walking_images_right]
+
+            # Load kicking images
+            self.attack_images = load_sheet(self.sheet, (0, 2984), (1652, 3186 ), self.sheet.get_at((0,0)))
+            self.attack_idx = 0
+            self.attack_images_right = self.attack_images
+            self.attack_images_left = [pygame.transform.flip(x, True, False) for x in self.attack_images_right]
+
+            # Load impact images
+            self.impact_images = load_sheet(self.sheet, (1721, 1143), (2279, 1338), self.sheet.get_at((0,0)))
+            self.impact_idx = 0
+            self.impact_images_right = self.impact_images
+            self.impact_images_left = [pygame.transform.flip(x, True, False) for x in self.impact_images_right]
+
+            #Load dying images
+            self.dying_images = load_sheet(self.sheet, (1734, 728), (3420, 898), self.sheet.get_at((0,0)))
+            self.dying_idx = 0
+            img2 = pygame.Surface((262, 170), pygame.SRCALPHA, 32).convert_alpha()
+            # For a flickering effect after death
+            self.dying_images.extend([self.dying_images[-1], img2]*4)
+            self.dying_images_right = self.dying_images
+            self.dying_images_left = [pygame.transform.flip(x, True, False) for x in self.dying_images_right]
+
+            Enemy.sprite_cache  = (self.idle_images_right,
+                                   self.idle_images_left,
+                                   self.walking_images_right,
+                                   self.walking_images_left,
+                                   self.attack_images_right,
+                                   self.attack_images_left,
+                                   self.impact_images_right,
+                                   self.impact_images_left,
+                                   self.dying_images_right,
+                                   self.dying_images_left)
 
 
     def ai(self):
@@ -726,7 +757,6 @@ class Background(pygame.sprite.Sprite):
 
         self.black = pygame.Surface((X_MAX, Y_MAX)).convert_alpha()
         self.black.fill((0,0,0,255))
-        self.alpha = 255
 
         self.image = pygame.Surface((X_MAX, Y_MAX),pygame.SRCALPHA, 32).convert_alpha()
         self.background = pygame.image.load(bgimage).convert()
@@ -736,10 +766,11 @@ class Background(pygame.sprite.Sprite):
 
         self.vertical = self.to = 0
         self.vel = 0
-        self.fighter = None
+        self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
         self.add(groups)
         
     def update(self):
+        pass
         _, _, t, _ = self.sheet.get_rect()
         new_pos = self.vertical + self.vel
 
@@ -749,26 +780,22 @@ class Background(pygame.sprite.Sprite):
         if abs(self.vertical - self.to) < 50:
             self.to = self.vertical
             self.vel = 0
+        else:
+            self.image.blit(self.background, dest = (0,0))
+            self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
 
-        self.image.blit(self.background, dest = (0,0))
-        self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
-        self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
-        self.alpha -= 5
-        if self.alpha >= 0:
-            self.black.fill((0,0,0,self.alpha))
-            self.image.blit(self.black, dest = (0,0))
 
     def scroll_right(self):
         self.to = self.vertical + 100
-        self.vel = 50
+        self.vel = 25
 
     def scroll_left(self):
         self.to = self.vertical - 100
-        self.vel = -50
+        self.vel = -25
 
 def init_pygame(groups):
     pygame.mixer.init()
-    screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
+    screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF|HWSURFACE)
     empty = pygame.Surface((X_MAX, Y_MAX))
     return screen, empty
 
@@ -868,7 +895,7 @@ def main():
 
         check_collisions(f, enemies, everything)
 
-        clock.tick(20)
+        clock.tick(30)
 
         everything.clear(screen, empty)
         everything.update()
@@ -877,11 +904,11 @@ def main():
             
 
 if __name__ == "__main__":
-    print """
+    print ("""
     <- to move left
     -> to move right
 
     a to hit
     s to kick
-    """
+    """)
     main()
