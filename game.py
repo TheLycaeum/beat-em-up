@@ -354,7 +354,7 @@ class Boss(Enemy):
         s = time.time()
         super(Boss, self).__init__(image, groups, pos, fighter)
         self.state = Boss.INTRO
-        self.energy = 50
+        self.energy = 2
         self.death_sound = pygame.mixer.Sound("audio/boss-scream.wav")
         self.death_sound.set_volume(2)
         self.direction = "right"
@@ -448,7 +448,7 @@ class Boss(Enemy):
             self.death_sound.play()
         if self.dying_idx == 0:
             self.kill()
-        game_state['success'] = True
+            game_state['success'] = True
 
 
     def update_walking(self):
@@ -507,6 +507,7 @@ class Fighter(pygame.sprite.Sprite):
     PUNCHING = "punching"
     KICKING = "kicking"
     DYING = "dying"
+    SUCCESS = "success"
     WALKING_RIGHT = "walking_right"
     WALKING_LEFT = "walking_left"
     IMPACTED = "impacted"
@@ -587,6 +588,14 @@ class Fighter(pygame.sprite.Sprite):
         self.dying_images_right = self.dying_images
         self.dying_images_left = [pygame.transform.flip(x, True, False) for x in self.dying_images_right]
 
+        # Load success images
+        self.success_images = load_sheet(self.sheet, (0, 2581), (960, 2839), self.sheet.get_at((0,0)))
+        self.success_images.extend([self.success_images[-1]]*10)
+        self.success_idx = 0
+
+
+    def success(self):
+        self.state = Fighter.SUCCESS
 
     def idle(self):
         if self.state != Fighter.DYING:
@@ -649,12 +658,14 @@ class Fighter(pygame.sprite.Sprite):
                    Fighter.WALKING_RIGHT : self.update_walking_right,
                    Fighter.WALKING_LEFT  : self.update_walking_left,
                    Fighter.DYING         : self.update_dying,
+                   Fighter.SUCCESS       : self.update_success,
                    Fighter.IMPACTED      : self.update_impacted}
         action = actions[self.state] 
         action()
 
         self.rect = self.image.get_rect()
         self.rect.midbottom = self.fighter_pos
+
 
     def update_dying(self):
         self.image = self.dying_images[int(self.dying_idx)]
@@ -682,6 +693,30 @@ class Fighter(pygame.sprite.Sprite):
         if self.impacted_idx == 0:
             self.state = Fighter.IDLING
             self.energy -=1
+
+    def update_success(self):
+        self.image = self.success_images[int(self.success_idx)]
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = self.fighter_pos
+        if 'done' not in game_state:
+            self.success_idx += 0.25
+            self.success_idx %= len(self.success_images)
+
+        if self.success_idx == 0:
+            self.state = Fighter.IDLING
+            game_state['done'] = True
+            self.image = self.success_images[-1]
+
+            self.rect = self.image.get_rect()
+            x, y = self.fighter_pos
+            middle = X_MAX/2
+
+            if abs (x - middle) > 5:
+                d = abs(x-middle)/(x-middle)
+                x -= 3*d
+                self.fighter_pos = x,y
+        
+
 
 
     def update_walking_right(self):
@@ -757,6 +792,7 @@ class Background(pygame.sprite.Sprite):
 
         self.black = pygame.Surface((X_MAX, Y_MAX)).convert_alpha()
         self.black.fill((0,0,0,255))
+        self.black_alpha = 0
 
         self.image = pygame.Surface((X_MAX, Y_MAX),pygame.SRCALPHA, 32).convert_alpha()
         self.background = pygame.image.load(bgimage).convert()
@@ -770,7 +806,7 @@ class Background(pygame.sprite.Sprite):
         self.add(groups)
         
     def update(self):
-        pass
+
         _, _, t, _ = self.sheet.get_rect()
         new_pos = self.vertical + self.vel
 
@@ -784,14 +820,21 @@ class Background(pygame.sprite.Sprite):
             self.image.blit(self.background, dest = (0,0))
             self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
 
+        if 'done' in game_state and self.black_alpha < 255:
+            self.image.blit(self.sheet, dest = (0,0), area = (self.vertical,0,X_MAX, Y_MAX))
+            self.black.fill((0,0,0,self.black_alpha))
+            self.image.blit(self.black, dest = (0,0))
+            self.black_alpha += 20
+            
+
 
     def scroll_right(self):
-        self.to = self.vertical + 100
-        self.vel = 25
+        self.to = self.vertical + 150
+        self.vel = 50
 
     def scroll_left(self):
-        self.to = self.vertical - 100
-        self.vel = -25
+        self.to = self.vertical - 150
+        self.vel = -50
 
 def init_pygame(groups):
     pygame.mixer.init()
@@ -836,12 +879,13 @@ def main():
         everything.draw(screen)
         pygame.display.flip()
 
-
     while True:
         if death_counter == 0:
             sys.exit(0)
-        if 'over' in game_state or 'success' in game_state:
+        if 'over' in game_state:
             death_counter -=1
+        if 'success' in game_state:
+            f.success()
         
         if b.vertical > 3000 and not boss:
             if boss_counter == 100:
@@ -851,7 +895,8 @@ def main():
                     i.state = Enemy.DYING
             elif boss_counter == 70:
                 if pygame.mixer.get_init():
-                    pygame.mixer.music.load("music/boss-1.mp3")
+                    pygame.mixer.music.stop()
+                    pygame.mixer.music.load("music/boss-2.mp3")
                     pygame.mixer.music.set_volume(0.4)
                     pygame.mixer.music.play(-1)
             elif boss_counter == 0:
@@ -859,9 +904,8 @@ def main():
                 EnergyBar((10,40), everything, boss.energy, boss)
             boss_counter -= 1
         else:
-            if len(enemies) != 1 and 'over' not in game_state:
+            if len(enemies) != 1 and 'over' not in game_state and 'success' not in game_state:
                 Enemy("sprites/enemy-gato.png", [everything, enemies], (random.choice([-150, 1350]), 450), f)
-            
 
 
         for event in pygame.event.get():
@@ -882,7 +926,7 @@ def main():
                         f.walk_vel *= -1
                         f.direction = "left"
                 if event.key == K_DOWN:
-                    f.energy = 0
+                    f.success()
                 if event.key == K_a:
                     f.punch()
 
@@ -895,7 +939,7 @@ def main():
 
         check_collisions(f, enemies, everything)
 
-        clock.tick(30)
+        clock.tick(20)
 
         everything.clear(screen, empty)
         everything.update()
