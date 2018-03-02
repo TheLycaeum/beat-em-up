@@ -354,7 +354,7 @@ class Boss(Enemy):
         s = time.time()
         super(Boss, self).__init__(image, groups, pos, fighter)
         self.state = Boss.INTRO
-        self.energy = 2
+        self.energy = 50
         self.death_sound = pygame.mixer.Sound("audio/boss-scream.wav")
         self.death_sound.set_volume(2)
         self.direction = "right"
