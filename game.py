@@ -838,7 +838,7 @@ class Background(pygame.sprite.Sprite):
 
 def init_pygame(groups):
     pygame.mixer.init()
-    screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF|HWSURFACE)
+    screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF|HWSURFACE|FULLSCREEN)
     empty = pygame.Surface((X_MAX, Y_MAX))
     return screen, empty
 
